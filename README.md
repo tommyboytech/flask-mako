@@ -16,6 +16,11 @@ currently:
     def index():
        return "Hello World !"
        
+
+### testing:
+
+    python -m unittest
+       
        
 Documentation: http://packages.python.org/Flask-Mako/
 
