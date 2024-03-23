@@ -7,7 +7,7 @@ flask-genshi and flask itself.
 currently:
 
     from flask import Flask
-    from flask.ext.mako import MakoTemplates, render_template
+    from flask_mako import MakoTemplates, render_template
 
     app = Flask(__name__)
     mako = MakoTemplates(app)
