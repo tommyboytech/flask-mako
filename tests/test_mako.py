@@ -207,18 +207,23 @@ class MakoDetailedTestCase(unittest.TestCase):
     # todo removed 2.4 is a new one neccisary?
     # @unittest.skipIf(not flask.signals_available,
     #                  "This test requires Flask signaling support.")
+    @contextmanager
     def test_signals(self):
         """ Tests that template rendering fires the right signal. """
-        from flask.signals import template_rendered
+        from flask import template_rendered
 
         self._add_template("signal", "signal template")
         with self.test_renderer() as (app, mako):
 
             log = []
-            def record(*args, **extra):
+            def record(a, b, c, **extra):
                 log.append(args)
             template_rendered.connect(record, app)
 
+            try:
+                yield log
+            finally:
+                template_rendered.disconnect(record, app)
             result = render_template('signal')
 
             self.assertEqual(len(log), 1)
