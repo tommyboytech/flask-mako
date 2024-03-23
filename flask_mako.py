@@ -35,6 +35,7 @@ _BABEL_IMPORTS =  'from flask_babel import gettext as _, ngettext, ' \
                   'pgettext, npgettext'
 _FLASK_IMPORTS =  'from flask.helpers import url_for, get_flashed_messages'
 
+def stack(): return current_app
 
 #todo seems like over kill investigate
 class Line:
@@ -274,9 +275,9 @@ def render_template(template_name, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    return _render(_lookup(ctx.app).get_template(template_name),
-                   context, ctx.app)
+    ctx = stack()
+    return _render(_lookup(ctx).get_template(template_name),
+                   context, ctx)
 
 
 def render_template_string(source, **context):
@@ -288,9 +289,9 @@ def render_template_string(source, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    template = Template(source, lookup=_lookup(ctx.app))
-    return _render(template, context, ctx.app)
+    ctx = stack()
+    template = Template(source, lookup=_lookup(ctx))
+    return _render(template, context, ctx)
 
 
 def render_template_def(template_name, def_name, **context):
@@ -306,6 +307,6 @@ def render_template_def(template_name, def_name, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    template = _lookup(ctx.app).get_template(template_name)
-    return _render(template.get_def(def_name), context, ctx.app)
+    ctx = stack()
+    template = _lookup(ctx).get_template(template_name)
+    return _render(template.get_def(def_name), context, ctx)
