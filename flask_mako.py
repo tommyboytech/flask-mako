@@ -20,7 +20,7 @@ from flask.signals import template_rendered
 # todo verify 
 from flask import current_app
 
-from werkzeug.debug.tbtools import Traceback, Frame, Line
+from werkzeug.debug.tbtools import DebugTraceback as Traceback, Frame, Line
 
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -70,7 +70,7 @@ class TemplateError(RichTraceback, RuntimeError):
         """ Munge the default Werkzeug traceback to include Mako info. """
 
         orig_type, orig_value, orig_tb = self.einfo
-        translated = Traceback(orig_type, orig_value, tb)
+        translated = Traceback(orig_value, tb)
 
         # Drop the "raise" frame from the traceback.
         translated.frames.pop()
