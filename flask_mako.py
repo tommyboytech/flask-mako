@@ -20,7 +20,7 @@ from flask.signals import template_rendered
 # todo verify 
 from flask import current_app
 
-from werkzeug.debug.tbtools import DebugTraceback as Traceback, Frame, Line
+from werkzeug.debug.tbtools import DebugTraceback as Traceback, DebugFrameSummary as Frame, Line
 
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -88,7 +88,7 @@ class TemplateError(RichTraceback, RuntimeError):
             if name:
                 new_frame = MakoFrame(orig_type, orig_value, tb, name, line)
             else:
-                new_frame = Frame(orig_type, orig_value, tb)
+                new_frame = Frame()
 
             translated.frames.append(new_frame)
 
