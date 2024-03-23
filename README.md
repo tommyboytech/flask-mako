@@ -14,7 +14,7 @@ currently:
    
     @app.route('/')
     def index():
-       return "Hello World !"
+       return "Hello World!"
        
 
 ### testing:
@@ -29,5 +29,13 @@ PyPI: http://pypi.python.org/pypi/Flask-Mako/
 
 ### todo 
 
+- flask_mako
+  - lines class needed?
+  - locking
+  - test errors
 - testing
-- document a little better
+  - install
+  - unittest deprecation warning
+  - signals_available?
+- document
+  - install
