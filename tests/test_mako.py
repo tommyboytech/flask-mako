@@ -204,8 +204,9 @@ class MakoDetailedTestCase(unittest.TestCase):
         with self.test_renderer(MAKO_IMPORTS=imports) as (_, mako):
             self.assertEqual(render_template("imports"), ascii_letters.encode())
 
-    @unittest.skipIf(not flask.signals_available,
-                     "This test requires Flask signaling support.")
+    # todo removed 2.4 is a new one neccisary?
+    # @unittest.skipIf(not flask.signals_available,
+    #                  "This test requires Flask signaling support.")
     def test_signals(self):
         """ Tests that template rendering fires the right signal. """
         from flask.signals import template_rendered
