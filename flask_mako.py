@@ -16,12 +16,9 @@ import os, sys
 from flask.signals import template_rendered
 
 # Find the context stack so we can resolve which application is calling this
-# extension.  Starting with Flask 0.9, the _app_ctx_stack is the correct one,
-# before that we need to use the _request_ctx_stack.
-try:
-    from flask import _app_ctx_stack as stack
-except ImportError:
-    from flask import _request_ctx_stack as stack
+# extension.  Flask now using current_app
+# todo verify 
+from flask import current_app
 
 from werkzeug.debug.tbtools import Traceback, Frame, Line
 
