@@ -10,6 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import os, sys
+import typing as t
 
 # todo don't think in use is it?
 # from flask.helpers import locked_cached_property
@@ -20,7 +21,7 @@ from flask.signals import template_rendered
 # todo verify 
 from flask import current_app
 
-from werkzeug.debug.tbtools import DebugTraceback as Traceback, DebugFrameSummary as Frame, Line
+from werkzeug.debug.tbtools import DebugTraceback as Traceback, DebugFrameSummary as Frame
 
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -33,6 +34,36 @@ itervalues = getattr(dict, 'itervalues', dict.values)
 _BABEL_IMPORTS =  'from flask_babel import gettext as _, ngettext, ' \
                   'pgettext, npgettext'
 _FLASK_IMPORTS =  'from flask.helpers import url_for, get_flashed_messages'
+
+
+#todo seems like over kill investigate
+class Line:
+    """Helper for the source renderer."""
+
+    __slots__ = ("lineno", "code", "in_frame", "current")
+
+    def __init__(self, lineno: int, code: str) -> None:
+        self.lineno = lineno
+        self.code = code
+        self.in_frame = False
+        self.current = False
+
+    @property
+    def classes(self) -> t.List[str]:
+        rv = ["line"]
+        if self.in_frame:
+            rv.append("in-frame")
+        if self.current:
+            rv.append("current")
+        return rv
+
+    def render(self) -> str:
+        return SOURCE_LINE_HTML % {
+            "classes": " ".join(self.classes),
+            "lineno": self.lineno,
+            "code": escape(self.code),
+        }
+
 
 class MakoFrame(Frame):
     """ A special `~werkzeug.debug.tbtools.Frame` object for Mako sources. """
