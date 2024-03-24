@@ -16,6 +16,13 @@ currently:
     def index():
        return "Hello World!"
        
+       
+### install
+
+    cd project folder
+    python -m build
+    pip install ./
+       
 
 ### testing:
 
