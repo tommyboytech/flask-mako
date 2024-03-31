@@ -17,9 +17,9 @@ currently:
        return "Hello World!"
        
        
-### install
+### build and install
 
-    cd project folder
+    cd project/folder
     python -m build
     pip install ./
        
