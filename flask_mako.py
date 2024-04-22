@@ -10,19 +10,18 @@
     :license: BSD, see LICENSE for more details.
 """
 import os, sys
+import typing as t
 
-from flask.helpers import locked_cached_property
+# todo don't think in use is it?
+# from flask.helpers import locked_cached_property
 from flask.signals import template_rendered
 
 # Find the context stack so we can resolve which application is calling this
-# extension.  Starting with Flask 0.9, the _app_ctx_stack is the correct one,
-# before that we need to use the _request_ctx_stack.
-try:
-    from flask import _app_ctx_stack as stack
-except ImportError:
-    from flask import _request_ctx_stack as stack
+# extension.  Flask now using current_app
+# todo verify 
+from flask import current_app
 
-from werkzeug.debug.tbtools import Traceback, Frame, Line
+from werkzeug.debug.tbtools import DebugTraceback as Traceback, DebugFrameSummary as Frame
 
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -35,6 +34,37 @@ itervalues = getattr(dict, 'itervalues', dict.values)
 _BABEL_IMPORTS =  'from flask_babel import gettext as _, ngettext, ' \
                   'pgettext, npgettext'
 _FLASK_IMPORTS =  'from flask.helpers import url_for, get_flashed_messages'
+
+def stack(): return current_app
+
+#todo seems like over kill investigate
+class Line:
+    """Helper for the source renderer."""
+
+    __slots__ = ("lineno", "code", "in_frame", "current")
+
+    def __init__(self, lineno: int, code: str) -> None:
+        self.lineno = lineno
+        self.code = code
+        self.in_frame = False
+        self.current = False
+
+    @property
+    def classes(self) -> t.List[str]:
+        rv = ["line"]
+        if self.in_frame:
+            rv.append("in-frame")
+        if self.current:
+            rv.append("current")
+        return rv
+
+    def render(self) -> str:
+        return SOURCE_LINE_HTML % {
+            "classes": " ".join(self.classes),
+            "lineno": self.lineno,
+            "code": escape(self.code),
+        }
+
 
 class MakoFrame(Frame):
     """ A special `~werkzeug.debug.tbtools.Frame` object for Mako sources. """
@@ -72,7 +102,7 @@ class TemplateError(RichTraceback, RuntimeError):
         """ Munge the default Werkzeug traceback to include Mako info. """
 
         orig_type, orig_value, orig_tb = self.einfo
-        translated = Traceback(orig_type, orig_value, tb)
+        translated = Traceback(orig_value, tb)
 
         # Drop the "raise" frame from the traceback.
         translated.frames.pop()
@@ -90,7 +120,7 @@ class TemplateError(RichTraceback, RuntimeError):
             if name:
                 new_frame = MakoFrame(orig_type, orig_value, tb, name, line)
             else:
-                new_frame = Frame(orig_type, orig_value, tb)
+                new_frame = Frame()
 
             translated.frames.append(new_frame)
 
@@ -245,9 +275,9 @@ def render_template(template_name, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    return _render(_lookup(ctx.app).get_template(template_name),
-                   context, ctx.app)
+    ctx = stack()
+    return _render(_lookup(ctx).get_template(template_name),
+                   context, ctx)
 
 
 def render_template_string(source, **context):
@@ -259,9 +289,9 @@ def render_template_string(source, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    template = Template(source, lookup=_lookup(ctx.app))
-    return _render(template, context, ctx.app)
+    ctx = stack()
+    template = Template(source, lookup=_lookup(ctx))
+    return _render(template, context, ctx)
 
 
 def render_template_def(template_name, def_name, **context):
@@ -277,6 +307,6 @@ def render_template_def(template_name, def_name, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    template = _lookup(ctx.app).get_template(template_name)
-    return _render(template.get_def(def_name), context, ctx.app)
+    ctx = stack()
+    template = _lookup(ctx).get_template(template_name)
+    return _render(template.get_def(def_name), context, ctx)
