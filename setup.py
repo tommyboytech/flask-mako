@@ -13,7 +13,7 @@ from setuptools import setup
 
 setup(
     name='Flask-Mako',
-    version='0.5',
+    version='0.5-umt',
     url='https://github.com/benselme/flask-mako',
     license='BSD',
     author='Beranger Enselme, Frank Murphy',
