@@ -11,18 +11,19 @@
 """
 import os, sys
 
-from flask.helpers import locked_cached_property
+# locked_cached_property was removed in Flask 3.x and was not used in this code
 from flask.signals import template_rendered
 
-# Find the context stack so we can resolve which application is calling this
-# extension.  Starting with Flask 0.9, the _app_ctx_stack is the correct one,
-# before that we need to use the _request_ctx_stack.
-try:
-    from flask import _app_ctx_stack as stack
-except ImportError:
-    from flask import _request_ctx_stack as stack
+# In Flask 3.x, we use current_app directly instead of context stacks
+from flask import current_app
 
-from werkzeug.debug.tbtools import Traceback, Frame, Line
+from werkzeug.debug.tbtools import DebugTraceback as Traceback, DebugFrameSummary as Frame
+# Line class is no longer available in newer Werkzeug versions
+class Line:
+    def __init__(self, lineno, code):
+        self.lineno = lineno
+        self.code = code
+        self.current = False
 
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -39,13 +40,25 @@ _FLASK_IMPORTS =  'from flask.helpers import url_for, get_flashed_messages'
 class MakoFrame(Frame):
     """ A special `~werkzeug.debug.tbtools.Frame` object for Mako sources. """
     def __init__(self, exc_type, exc_value, tb, name, line):
-        super(MakoFrame, self).__init__(exc_type, exc_value, tb)
+        # Initialize with the new DebugFrameSummary signature
+        frame_locals = tb.tb_frame.f_locals if tb else {}
+        frame_globals = tb.tb_frame.f_globals if tb else {}
+        
+        super(MakoFrame, self).__init__(
+            locals=frame_locals,
+            globals=frame_globals,
+            filename=name,
+            lineno=line,
+            name="<template>"
+        )
+        
         self.info = "(translated Mako exception)"
-        self.filename = name
-        self.lineno = line
-        old_locals = self.locals
-        self.locals = dict(tb.tb_frame.f_locals['context'].kwargs)
-        self.locals['__mako_module_locals__'] = old_locals
+        
+        # Update locals with Mako context if available
+        if tb and 'context' in frame_locals:
+            old_locals = frame_locals.copy()
+            self.locals = dict(frame_locals['context'].kwargs)
+            self.locals['__mako_module_locals__'] = old_locals
 
     def get_annotated_lines(self):
         """
@@ -245,9 +258,9 @@ def render_template(template_name, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    return _render(_lookup(ctx.app).get_template(template_name),
-                   context, ctx.app)
+    app = current_app._get_current_object()
+    return _render(_lookup(app).get_template(template_name),
+                   context, app)
 
 
 def render_template_string(source, **context):
@@ -259,9 +272,9 @@ def render_template_string(source, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    template = Template(source, lookup=_lookup(ctx.app))
-    return _render(template, context, ctx.app)
+    app = current_app._get_current_object()
+    template = Template(source, lookup=_lookup(app))
+    return _render(template, context, app)
 
 
 def render_template_def(template_name, def_name, **context):
@@ -277,6 +290,6 @@ def render_template_def(template_name, def_name, **context):
     :param context: the variables that should be available in the
                     context of the template.
     """
-    ctx = stack.top
-    template = _lookup(ctx.app).get_template(template_name)
-    return _render(template.get_def(def_name), context, ctx.app)
+    app = current_app._get_current_object()
+    template = _lookup(app).get_template(template_name)
+    return _render(template.get_def(def_name), context, app)

@@ -13,7 +13,7 @@ from setuptools import setup
 
 setup(
     name='Flask-Mako',
-    version='0.5.post0',
+    version='0.6.0',
     url='https://github.com/benselme/flask-mako',
     license='BSD',
     author='Beranger Enselme, Frank Murphy',
@@ -24,7 +24,7 @@ setup(
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'Flask',
+        'Flask>=2.0,<4.0',
         'Mako'
     ],
     tests_require=(['unittest2'] if sys.version_info < (2, 7) else []),
